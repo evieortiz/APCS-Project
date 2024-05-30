@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raffle</title>
+    <style>
+        body {
+            background-color: #b99fcf;
+            font-family: Arial;
+            font-size: 20px;
+        }
+        .crossed-out {
+            text-decoration: line-through;
+            background-color: #788ccc;
+        }
+    </style>
+</head>
+<body>
+    <table border="1" id="table"></table>
+    <input type="number" id="numberInput" min="1" placeholder="Enter a number">
+    <button id="randomButton">Cross Out Random Numbers</button>
+    <p id="crossedOutNumbers">Crossed out numbers: </p>
+    <p id="remainingCells">Remaining cells: </p>
+    <script>
+        const table = document.getElementById('table');
+        const numberInput = document.getElementById('numberInput');
+        const button = document.getElementById('randomButton');
+        const crossedOutNumbersElement = document.getElementById('crossedOutNumbers');
+        const remainingCellsElement = document.getElementById('remainingCells');
+        let remainingCells;
+        let cells = [];
+        let availableCells = [];
+
+        // Function to create table
+        function createTable(totalCells) {
+            table.innerHTML = '';
+            cells = [];
+            remainingCells = totalCells;
+            availableCells = Array.from({length: totalCells}, (_, i) => i + 1);
+
+            const sqrt = Math.ceil(Math.sqrt(totalCells));
+            const rows = sqrt;
+            const cols = Math.ceil(totalCells / rows);
+
+            for (let i = 0; i < rows; i++) {
+                const tr = document.createElement('tr');
+                for (let j = 0; j < cols; j++) {
+                    const cellNumber = i * cols + j + 1;
+                    if (cellNumber <= totalCells) {
+                        const td = document.createElement('td');
+                        td.textContent = `${cellNumber}`;
+                        td.id = `cell-${cellNumber}`;
+                        td.addEventListener('click', () => {
+                            const crossedNumber = crossOutCell(cellNumber);
+                            if (crossedNumber !== null) {
+                                updateDisplay([crossedNumber]);
+                            }
+                        });
+                        cells.push(td);
+                        tr.appendChild(td);
+                    }
+                }
+                table.appendChild(tr);
+            }
+            remainingCellsElement.textContent = `Tickets Remaining: ${remainingCells}`;
+        }
+
+        // Function to cross out a cell
+        function crossOutCell(cellNumber) {
+            const cell = document.getElementById(`cell-${cellNumber}`);
+            if (!cell.classList.contains('crossed-out')) {
+                cell.classList.add('crossed-out');
+                remainingCells--;
+                availableCells = availableCells.filter(num => num !== cellNumber);
+                return cellNumber;
+            }
+            return null;
+        }
+
+        // Function to update the display of crossed out numbers and remaining cells
+        function updateDisplay(crossedNumbers) {
+            crossedOutNumbersElement.textContent = `Crossed out numbers: ${crossedNumbers.join(', ')}`;
+            remainingCellsElement.textContent = `Tickets Remaining: ${remainingCells}`;
+
+            if (remainingCells === 10) {
+                const userChoice = confirm("There are only 10 numbers left. Do you want to split the prize or keep raffling? Please press Cancel to continue raffling, and OK to split the prize.");
+                if (userChoice) {
+                    const remainingNumbers = cells.filter(cell => !cell.classList.contains('crossed-out')).map(cell => cell.textContent).join(', ');
+                    alert(`You chose to split the prize! The winners are: ${remainingNumbers}`);
+                } else {
+                    alert("You chose to keep raffling!");
+                }
+            }
+
+            if (remainingCells === 1) {
+                const winnerCell = cells.find(cell => !cell.classList.contains('crossed-out'));
+                const winnerNumber = winnerCell ? winnerCell.textContent : "unknown";
+                alert(`There is 1 number remaining! The winner is number ${winnerNumber}!`);
+            }
+        }
+
+        // Random number generation and cross out function
+        button.addEventListener('click', () => {
+            let numToCross = parseInt(numberInput.value);
+            if (isNaN(numToCross) || numToCross <= 0) {
+                alert("Please enter a valid number.");
+                return;
+            }
+            if (numToCross > remainingCells) {
+                alert("The number exceeds the remaining cells.");
+                return;
+            }
+
+            const crossedNumbers = [];
+            for (let i = 0; i < numToCross; i++) {
+                const randomIndex = Math.floor(Math.random() * availableCells.length);
+                const randomNumber = availableCells[randomIndex];
+                const crossedNumber = crossOutCell(randomNumber);
+                if (crossedNumber !== null) {
+                    crossedNumbers.push(crossedNumber);
+                }
+            }
+            updateDisplay(crossedNumbers);
+        });
+
+        // Prompt user for the number of cells and create the table
+        const totalCells = prompt("Enter the number of cells you want:", "300");
+        if (totalCells !== null && !isNaN(totalCells) && totalCells > 0) {
+            createTable(parseInt(totalCells));
+        } else {
+            alert("Invalid input. Please refresh the page and enter a valid number.");
+        }
+    </script>
+</body>
+</html>
